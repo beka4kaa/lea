@@ -1,16 +1,11 @@
 [phases.setup]
-nixPkgs = ['python311', 'nodePackages.nodejs']
+nixPkgs = ['python311', 'pip']
 
 [phases.install]
-cmds = [
-    'pip install --upgrade pip',
-    'pip install -r requirements.txt'
-]
+cmds = ['pip install -r requirements.txt']
 
 [phases.build]
-cmds = [
-    'echo "Build completed successfully"'
-]
+cmds = []
 
 [start]
-cmd = 'python server.py'
+cmd = 'python3 server.py'
