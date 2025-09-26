@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ui-aggregator": {
+      "command": "/Users/bekzhan/Documents/projects/mcp/.venv/bin/python",
+      "args": ["/Users/bekzhan/Documents/projects/mcp/lea/run_mcp_server.py"],
+      "env": {}
+    }
+  }
+}
