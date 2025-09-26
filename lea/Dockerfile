@@ -9,4 +9,5 @@ COPY . .
 
 EXPOSE 8000
 
+# Try main.py first, then start.py as fallback
 CMD ["python", "main.py"]
