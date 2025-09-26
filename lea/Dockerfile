@@ -17,12 +17,10 @@ RUN apt-get update && apt-get install -y \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy requirements
-COPY pyproject.toml ./
+# Copy requirements and install dependencies
+COPY requirements.txt pyproject.toml ./
 RUN pip install --upgrade pip setuptools wheel
-
-# Install Python dependencies
-RUN pip install -e .
+RUN pip install -r requirements.txt
 
 # Production stage
 FROM python:3.11-slim as production
