@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Set default port
-PORT=${PORT:-8000}
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 
-# Start the MCP UI Aggregator server
-exec uvicorn mcp_ui_aggregator.api.app:app --host 0.0.0.0 --port $PORT
+# Start the FastAPI application
+exec uvicorn mcp_ui_aggregator.api.app:app --host 0.0.0.0 --port "${PORT:-8000}"
