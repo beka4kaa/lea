@@ -308,6 +308,27 @@ TOOLS = [
 ]
 
 
+@router.get("/mcp")
+async def mcp_info():
+    """MCP endpoint information - GET requests return usage info."""
+    return {
+        "endpoint": "/mcp",
+        "protocol": "Model Context Protocol (MCP)",
+        "version": "2024-11-05",
+        "method": "POST",
+        "format": "JSON-RPC 2.0",
+        "description": "This endpoint accepts JSON-RPC 2.0 requests for MCP protocol communication",
+        "example_request": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/list",
+            "params": {}
+        },
+        "documentation": "https://github.com/beka4kaa/lea/blob/main/MCP_AGENT_INTEGRATION.md",
+        "discovery": "/mcp-discovery",
+        "error": "Use POST method with JSON-RPC 2.0 format for actual MCP communication"
+    }
+
 @router.post("/mcp")
 async def mcp_handler(request: Request):
     """Handle MCP JSON-RPC requests with format validation."""

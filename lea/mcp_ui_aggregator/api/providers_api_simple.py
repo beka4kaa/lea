@@ -160,8 +160,11 @@ async def get_component_code(
         if not code_data:
             raise HTTPException(status_code=404, detail=f"No code available for component '{provider}/{component}'")
         
-        # Get code in requested format
+        # Get code in requested format with intelligent fallback
         code = None
+        actual_format = format
+        
+        # Try requested format first
         if format.lower() == "tsx" and code_data.tsx:
             code = code_data.tsx
         elif format.lower() == "jsx" and code_data.jsx:
@@ -174,16 +177,53 @@ async def get_component_code(
             code = code_data.html
         elif format.lower() == "css" and code_data.css:
             code = code_data.css
-        else:
-            # Fallback to any available code
-            code = code_data.tsx or code_data.jsx or code_data.vue or code_data.svelte or code_data.html
+        
+        # If requested format not available, try fallback formats
+        if not code:
+            if code_data.tsx:
+                code = code_data.tsx
+                actual_format = "tsx"
+            elif code_data.jsx:
+                code = code_data.jsx
+                actual_format = "jsx"
+            elif code_data.vue:
+                code = code_data.vue
+                actual_format = "vue"
+            elif code_data.svelte:
+                code = code_data.svelte
+                actual_format = "svelte"
+            elif code_data.html:
+                code = code_data.html
+                actual_format = "html"
+            elif code_data.css:
+                code = code_data.css
+                actual_format = "css"
         
         if not code:
-            raise HTTPException(status_code=404, detail=f"Code not available in format '{format}' for component '{provider}/{component}'")
+            # Get available formats for better error message
+            available_formats = []
+            if code_data.tsx: available_formats.append("tsx")
+            if code_data.jsx: available_formats.append("jsx")
+            if code_data.vue: available_formats.append("vue")
+            if code_data.svelte: available_formats.append("svelte")
+            if code_data.html: available_formats.append("html")
+            if code_data.css: available_formats.append("css")
+            
+            if available_formats:
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"Code not available in format '{format}' for component '{provider}/{component}'. Available formats: {', '.join(available_formats)}"
+                )
+            else:
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"No code available for component '{provider}/{component}'"
+                )
         
         return {
             "component_id": f"{provider}/{component}",
-            "format": format,
+            "format": actual_format,
+            "requested_format": format,
             "code": code,
             "name": component_manifest.name,
             "description": component_manifest.description,
