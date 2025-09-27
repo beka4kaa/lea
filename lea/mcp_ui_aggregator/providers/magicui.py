@@ -1,4 +1,4 @@
-"""Magic UI provider implementation."""
+"""Magic UI provider implementation with enhanced code templates."""
 
 import json
 import re
@@ -21,6 +21,201 @@ from ..models.component_manifest import (
     InstallPlan,
     ComponentCategory
 )
+
+# Enhanced code templates for Magic UI components
+MAGICUI_CODE_TEMPLATES = {
+    "magic-button": {
+        "tsx": '''import React from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface MagicButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export default function MagicButton({
+  children,
+  className,
+  ...props
+}: MagicButtonProps) {
+  return (
+    <motion.button
+      className={cn(
+        "relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50",
+        className
+      )}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      {...props}
+    >
+      <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+      <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
+        {children}
+      </span>
+    </motion.button>
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "A magical button with animated gradient border and hover effects."
+    },
+    
+    "rainbow-button": {
+        "tsx": '''import React from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface RainbowButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export default function RainbowButton({
+  children,
+  className,
+  ...props
+}: RainbowButtonProps) {
+  return (
+    <motion.button
+      className={cn(
+        "group relative inline-flex h-11 items-center justify-center overflow-hidden rounded-md bg-neutral-950 px-6 font-medium text-neutral-200 transition hover:scale-110",
+        className
+      )}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      {...props}
+    >
+      <span className="absolute inset-0 overflow-hidden rounded-md">
+        <span className="absolute inset-0 rounded-md bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+      </span>
+      <span className="relative z-10">{children}</span>
+    </motion.button>
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "A button with rainbow gradient hover effect and smooth animations."
+    },
+    
+    "marquee": {
+        "tsx": '''import { cn } from "@/lib/utils";
+
+interface MarqueeProps {
+  className?: string;
+  reverse?: boolean;
+  pauseOnHover?: boolean;
+  children?: React.ReactNode;
+  vertical?: boolean;
+  repeat?: number;
+}
+
+export default function Marquee({
+  className,
+  reverse,
+  pauseOnHover = false,
+  children,
+  vertical = false,
+  repeat = 4,
+  ...props
+}: MarqueeProps) {
+  return (
+    <div
+      {...props}
+      className={cn(
+        "group flex overflow-hidden p-2 [--duration:20s] [--gap:1rem] [gap:var(--gap)]",
+        {
+          "flex-row": !vertical,
+          "flex-col": vertical,
+        },
+        className,
+      )}
+    >
+      {Array(repeat)
+        .fill(0)
+        .map((_, i) => (
+          <div
+            key={i}
+            className={cn("flex shrink-0 justify-around [gap:var(--gap)]", {
+              "animate-marquee flex-row": !vertical,
+              "animate-marquee-vertical flex-col": vertical,
+              "group-hover:[animation-play-state:paused]": pauseOnHover,
+              "[animation-direction:reverse]": reverse,
+            })}
+          >
+            {children}
+          </div>
+        ))}
+    </div>
+  );
+}''',
+        "dependencies": ["clsx", "tailwind-merge"],
+        "description": "A marquee component for scrolling content horizontally or vertically."
+    },
+    
+    "sparkles": {
+        "tsx": '''import React from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface SparklesProps {
+  children: React.ReactNode;
+  className?: string;
+  color?: string;
+  size?: number;
+}
+
+export default function Sparkles({
+  children,
+  className,
+  color = "rgba(255, 255, 255, 0.8)",
+  size = 16,
+}: SparklesProps) {
+  const sparkles = Array.from({ length: 3 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    scale: Math.random() * 0.5 + 0.5,
+  }));
+
+  return (
+    <span className={cn("relative inline-block", className)}>
+      {sparkles.map((sparkle) => (
+        <motion.div
+          key={sparkle.id}
+          className="pointer-events-none absolute"
+          style={{
+            left: `${sparkle.x}%`,
+            top: `${sparkle.y}%`,
+            transform: "translate(-50%, -50%)",
+          }}
+          animate={{
+            scale: [0, sparkle.scale, 0],
+            rotate: [0, 360],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            delay: sparkle.id * 0.5,
+          }}
+        >
+          <div
+            style={{
+              width: size,
+              height: size,
+              backgroundColor: color,
+            }}
+            className="rounded-full"
+          />
+        </motion.div>
+      ))}
+      {children}
+    </span>
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "Add magical sparkle effects to any component."
+    }
+}
 
 
 @register_provider
@@ -82,26 +277,36 @@ class MagicUIProvider(GitHubProvider):
         self,
         component_data: Dict[str, Any]
     ) -> Optional[ComponentManifest]:
-        """Create component manifest from registry data."""
+        """Create component manifest from registry data with enhanced code templates."""
         try:
             name = component_data.get("name", "")
             slug = component_data.get("slug", name.lower().replace(" ", "-"))
             
-            # Get component code
+            # Check if we have a template for this component
+            template = MAGICUI_CODE_TEMPLATES.get(slug)
             code_content = ""
-            if "files" in component_data:
-                for file_info in component_data["files"]:
-                    if file_info.get("type") == "component":
-                        file_path = file_info.get("path", "")
-                        if file_path:
-                            try:
-                                code_content = await self.get_file_content(file_path)
-                                break
-                            except:
-                                continue
+            runtime_deps = []
             
-            # Extract dependencies from code
-            runtime_deps = self._extract_dependencies(code_content)
+            if template:
+                # Use our enhanced template
+                code_content = template.get("tsx", "")
+                runtime_deps = template.get("dependencies", [])
+            else:
+                # Try to get code from registry
+                if "files" in component_data:
+                    for file_info in component_data["files"]:
+                        if file_info.get("type") == "component":
+                            file_path = file_info.get("path", "")
+                            if file_path:
+                                try:
+                                    code_content = await self.get_file_content(file_path)
+                                    break
+                                except:
+                                    continue
+                
+                # Extract dependencies from code if no template
+                if not runtime_deps:
+                    runtime_deps = self._extract_dependencies(code_content)
             
             # Determine category
             category = self._determine_category(name, component_data.get("category", ""))
@@ -530,7 +735,9 @@ class MagicUIProvider(GitHubProvider):
                 install=InstallPlan(
                     npm=comp_data["runtime_deps"]
                 ),
-                code=ComponentCode(),
+                code=ComponentCode(
+                    tsx=MAGICUI_CODE_TEMPLATES.get(comp_data['slug'], {}).get('tsx')
+                ),
                 access=ComponentAccess(
                     copy_paste=True,
                     pro=False
