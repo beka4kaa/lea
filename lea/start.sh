@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+PORT="${PORT:-8000}"
 
-# Start the FastAPI application
-exec uvicorn mcp_ui_aggregator.api.app:app --host 0.0.0.0 --port "${PORT:-8000}"
+echo "Starting MCP UI Aggregator on port ${PORT}"
+exec uvicorn mcp_ui_aggregator.api.app:app --host 0.0.0.0 --port "${PORT}"
