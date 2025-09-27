@@ -214,6 +214,606 @@ export default function Sparkles({
 }''',
         "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
         "description": "Add magical sparkle effects to any component."
+    },
+    
+    "contact-form": {
+        "tsx": '''import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface ContactFormProps {
+  className?: string;
+  onSubmit?: (data: FormData) => void;
+}
+
+interface FormData {
+  name: string;
+  email: string;
+  message: string;
+}
+
+export default function ContactForm({ className, onSubmit }: ContactFormProps) {
+  const [formData, setFormData] = useState<FormData>({
+    name: "",
+    email: "",
+    message: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      onSubmit?.(formData);
+      setIsSubmitted(true);
+      setFormData({ name: "", email: "", message: "" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className={cn("p-8 text-center bg-green-50 rounded-lg border border-green-200", className)}
+      >
+        <div className="text-green-600 text-2xl mb-2">✓</div>
+        <h3 className="text-green-800 font-semibold mb-2">Message Sent!</h3>
+        <p className="text-green-700">Thank you for your message. We'll get back to you soon.</p>
+        <button
+          onClick={() => setIsSubmitted(false)}
+          className="mt-4 text-green-600 hover:text-green-800 underline"
+        >
+          Send another message
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.form
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      onSubmit={handleSubmit}
+      className={cn("space-y-4 p-6 bg-white rounded-lg shadow-lg border", className)}
+    >
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+          Name
+        </label>
+        <input
+          type="text"
+          id="name"
+          required
+          value={formData.name}
+          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Your name"
+        />
+      </div>
+      
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          Email
+        </label>
+        <input
+          type="email"
+          id="email"
+          required
+          value={formData.email}
+          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="your@email.com"
+        />
+      </div>
+      
+      <div>
+        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+          Message
+        </label>
+        <textarea
+          id="message"
+          required
+          rows={4}
+          value={formData.message}
+          onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          placeholder="Your message..."
+        />
+      </div>
+      
+      <motion.button
+        type="submit"
+        disabled={isSubmitting}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+      >
+        {isSubmitting ? "Sending..." : "Send Message"}
+      </motion.button>
+    </motion.form>
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "A complete contact form with validation, loading states, and success feedback."
+    },
+    
+    "modal-dialog": {
+        "tsx": '''import React, { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+  size?: "sm" | "md" | "lg" | "xl";
+}
+
+export default function Modal({ isOpen, onClose, title, children, className, size = "md" }: ModalProps) {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+    
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "auto";
+    };
+  }, [isOpen, onClose]);
+
+  const sizeClasses = {
+    sm: "max-w-md",
+    md: "max-w-lg",
+    lg: "max-w-2xl",
+    xl: "max-w-4xl"
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black bg-opacity-50"
+          />
+          
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className={cn(
+              "relative w-full bg-white rounded-lg shadow-xl",
+              sizeClasses[size],
+              className
+            )}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {children}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "A flexible modal dialog component with animations and keyboard support."
+    },
+    
+    "loading-spinner": {
+        "tsx": '''import React from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface LoadingSpinnerProps {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+  variant?: "spin" | "pulse" | "dots" | "bars";
+  color?: string;
+}
+
+export default function LoadingSpinner({ 
+  className, 
+  size = "md", 
+  variant = "spin",
+  color = "currentColor"
+}: LoadingSpinnerProps) {
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-8 h-8",
+    lg: "w-12 h-12"
+  };
+
+  if (variant === "spin") {
+    return (
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        className={cn(sizeClasses[size], className)}
+      >
+        <svg className="w-full h-full" fill="none" viewBox="0 0 24 24">
+          <circle
+            className="opacity-25"
+            cx="12" cy="12" r="10"
+            stroke={color} strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill={color}
+            d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+      </motion.div>
+    );
+  }
+
+  if (variant === "dots") {
+    return (
+      <div className={cn("flex space-x-1", className)}>
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            animate={{ y: [0, -8, 0], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
+            className={cn(
+              "rounded-full bg-current",
+              size === "sm" ? "w-2 h-2" : size === "md" ? "w-3 h-3" : "w-4 h-4"
+            )}
+            style={{ color }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+      transition={{ duration: 1.5, repeat: Infinity }}
+      className={cn("rounded-full bg-current", sizeClasses[size], className)}
+      style={{ color }}
+    />
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "Animated loading spinner with multiple variants."
+    },
+    
+    "tooltip": {
+        "tsx": '''import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface TooltipProps {
+  children: React.ReactNode;
+  content: React.ReactNode;
+  position?: "top" | "bottom" | "left" | "right";
+  className?: string;
+  delay?: number;
+}
+
+export default function Tooltip({ 
+  children, content, position = "top", className, delay = 500 
+}: TooltipProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  const showTooltip = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setIsVisible(true), delay);
+  };
+
+  const hideTooltip = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsVisible(false);
+  };
+
+  const positionClasses = {
+    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
+    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
+    left: "right-full top-1/2 -translate-y-1/2 mr-2",
+    right: "left-full top-1/2 -translate-y-1/2 ml-2"
+  };
+
+  const arrowClasses = {
+    top: "top-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-gray-900",
+    bottom: "bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-gray-900",
+    left: "left-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-gray-900",
+    right: "right-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-gray-900"
+  };
+
+  return (
+    <div
+      ref={triggerRef}
+      className="relative inline-block"
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+      onFocus={showTooltip}
+      onBlur={hideTooltip}
+    >
+      {children}
+      
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className={cn(
+              "absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-md shadow-lg whitespace-nowrap",
+              positionClasses[position],
+              className
+            )}
+          >
+            {content}
+            <div className={cn("absolute w-0 h-0 border-4", arrowClasses[position])} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "Interactive tooltip component with positioning."
+    },
+    
+    "image-gallery": {
+        "tsx": '''import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface Image {
+  id: string;
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+interface ImageGalleryProps {
+  images: Image[];
+  className?: string;
+  columns?: number;
+}
+
+export default function ImageGallery({ images, className, columns = 3 }: ImageGalleryProps) {
+  const [selectedImage, setSelectedImage] = useState<Image | null>(null);
+
+  return (
+    <>
+      <div 
+        className={cn(
+          "grid gap-4",
+          {
+            "grid-cols-1": columns === 1,
+            "grid-cols-2": columns === 2,
+            "grid-cols-3": columns === 3,
+            "grid-cols-4": columns === 4,
+          },
+          className
+        )}
+      >
+        {images.map((image, index) => (
+          <motion.div
+            key={image.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="cursor-pointer group relative overflow-hidden rounded-lg"
+            onClick={() => setSelectedImage(image)}
+          >
+            <img
+              src={image.src}
+              alt={image.alt}
+              className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+              <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                </svg>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-90"
+            onClick={() => setSelectedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-4xl max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={selectedImage.src}
+                alt={selectedImage.alt}
+                className="max-w-full max-h-full object-contain"
+              />
+              {selectedImage.caption && (
+                <p className="text-white text-center mt-4 text-lg">
+                  {selectedImage.caption}
+                </p>
+              )}
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "Interactive image gallery with lightbox functionality."
+    },
+    
+    "calculator": {
+        "tsx": '''import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface CalculatorProps {
+  className?: string;
+  onCalculate?: (result: number) => void;
+}
+
+export default function Calculator({ className, onCalculate }: CalculatorProps) {
+  const [display, setDisplay] = useState("0");
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operation, setOperation] = useState<string | null>(null);
+  const [waitingForOperand, setWaitingForOperand] = useState(false);
+
+  const inputNumber = (num: string) => {
+    if (waitingForOperand) {
+      setDisplay(num);
+      setWaitingForOperand(false);
+    } else {
+      setDisplay(display === "0" ? num : display + num);
+    }
+  };
+
+  const inputOperation = (nextOperation: string) => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operation) {
+      const currentValue = previousValue || 0;
+      const newValue = calculate(currentValue, inputValue, operation);
+      setDisplay(String(newValue));
+      setPreviousValue(newValue);
+      onCalculate?.(newValue);
+    }
+
+    setWaitingForOperand(true);
+    setOperation(nextOperation);
+  };
+
+  const calculate = (firstValue: number, secondValue: number, operation: string): number => {
+    switch (operation) {
+      case "+": return firstValue + secondValue;
+      case "-": return firstValue - secondValue;
+      case "×": return firstValue * secondValue;
+      case "÷": return firstValue / secondValue;
+      default: return secondValue;
+    }
+  };
+
+  const performCalculation = () => {
+    const inputValue = parseFloat(display);
+    if (previousValue !== null && operation) {
+      const newValue = calculate(previousValue, inputValue, operation);
+      setDisplay(String(newValue));
+      setPreviousValue(null);
+      setOperation(null);
+      setWaitingForOperand(true);
+      onCalculate?.(newValue);
+    }
+  };
+
+  const clear = () => {
+    setDisplay("0");
+    setPreviousValue(null);
+    setOperation(null);
+    setWaitingForOperand(false);
+  };
+
+  const Button = ({ onClick, className: buttonClassName, children, ...props }: any) => (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className={cn("h-16 text-xl font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors", buttonClassName)}
+      {...props}
+    >
+      {children}
+    </motion.button>
+  );
+
+  return (
+    <div className={cn("bg-gray-100 p-6 rounded-2xl shadow-lg max-w-sm mx-auto", className)}>
+      <div className="bg-gray-900 text-white p-4 rounded-lg mb-4 min-h-[4rem] flex items-center justify-end">
+        <div className="text-3xl font-mono overflow-hidden text-ellipsis">{display}</div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        <Button onClick={clear} className="col-span-2 bg-red-500 hover:bg-red-600 text-white">Clear</Button>
+        <Button onClick={() => inputOperation("÷")} className="bg-orange-500 hover:bg-orange-600 text-white">÷</Button>
+        <Button onClick={() => inputOperation("×")} className="bg-orange-500 hover:bg-orange-600 text-white">×</Button>
+
+        <Button onClick={() => inputNumber("7")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">7</Button>
+        <Button onClick={() => inputNumber("8")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">8</Button>
+        <Button onClick={() => inputNumber("9")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">9</Button>
+        <Button onClick={() => inputOperation("-")} className="bg-orange-500 hover:bg-orange-600 text-white">-</Button>
+
+        <Button onClick={() => inputNumber("4")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">4</Button>
+        <Button onClick={() => inputNumber("5")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">5</Button>
+        <Button onClick={() => inputNumber("6")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">6</Button>
+        <Button onClick={() => inputOperation("+")} className="bg-orange-500 hover:bg-orange-600 text-white">+</Button>
+
+        <Button onClick={() => inputNumber("1")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">1</Button>
+        <Button onClick={() => inputNumber("2")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">2</Button>
+        <Button onClick={() => inputNumber("3")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">3</Button>
+        <Button onClick={performCalculation} className="row-span-2 bg-blue-500 hover:bg-blue-600 text-white">=</Button>
+
+        <Button onClick={() => inputNumber("0")} className="col-span-2 bg-gray-300 hover:bg-gray-400 text-gray-800">0</Button>
+        <Button onClick={() => inputNumber(".")} className="bg-gray-300 hover:bg-gray-400 text-gray-800">.</Button>
+      </div>
+    </div>
+  );
+}''',
+        "dependencies": ["framer-motion", "clsx", "tailwind-merge"],
+        "description": "Interactive calculator component with animations."
     }
 }
 
@@ -700,6 +1300,54 @@ class MagicUIProvider(GitHubProvider):
                 "description": "Morphing liquid blob animation with smooth transitions.",
                 "category": "animated",
                 "tags": ["blob", "liquid", "morph"],
+                "runtime_deps": ["framer-motion"]
+            },
+            {
+                "name": "Contact Form",
+                "slug": "contact-form",
+                "description": "A complete contact form with validation, loading states, and success feedback.",
+                "category": "forms",
+                "tags": ["form", "contact", "validation"],
+                "runtime_deps": ["framer-motion"]
+            },
+            {
+                "name": "Modal Dialog",
+                "slug": "modal-dialog",
+                "description": "A flexible modal dialog component with animations and keyboard support.",
+                "category": "overlays",
+                "tags": ["modal", "dialog", "overlay"],
+                "runtime_deps": ["framer-motion"]
+            },
+            {
+                "name": "Image Gallery",
+                "slug": "image-gallery",
+                "description": "Interactive image gallery with lightbox functionality.",
+                "category": "data_display",
+                "tags": ["gallery", "images", "lightbox"],
+                "runtime_deps": ["framer-motion"]
+            },
+            {
+                "name": "Loading Spinner",
+                "slug": "loading-spinner",
+                "description": "Animated loading spinner with multiple variants.",
+                "category": "feedback",
+                "tags": ["loading", "spinner", "feedback"],
+                "runtime_deps": ["framer-motion"]
+            },
+            {
+                "name": "Tooltip",
+                "slug": "tooltip",
+                "description": "Interactive tooltip component with positioning.",
+                "category": "overlays",
+                "tags": ["tooltip", "hover", "info"],
+                "runtime_deps": ["framer-motion"]
+            },
+            {
+                "name": "Calculator",
+                "slug": "calculator",
+                "description": "Interactive calculator component with animations.",
+                "category": "other",
+                "tags": ["calculator", "math", "interactive"],
                 "runtime_deps": ["framer-motion"]
             }
         ]
