@@ -16,7 +16,7 @@ from ..providers import registry, get_provider
 from ..providers.base import ComponentNotFoundError, ProviderError
 
 
-router = APIRouter(prefix="/api/v1", tags=["providers"])
+router = APIRouter(tags=["providers"])
 
 
 @router.get("/providers", response_model=List[str])
