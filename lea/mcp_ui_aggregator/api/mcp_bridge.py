@@ -313,7 +313,7 @@ async def handle_tool_call(tool_name: str, arguments: Dict[str, Any]) -> Dict[st
                 return response.json()
             
             elif tool_name == "search_component":
-                # Map to GET /api/v1/search
+                # Map to GET /api/v1/components with search query
                 params = {"q": arguments["query"]}
                 if arguments.get("provider"):
                     params["provider"] = arguments["provider"]
@@ -326,7 +326,7 @@ async def handle_tool_call(tool_name: str, arguments: Dict[str, Any]) -> Dict[st
                 if arguments.get("limit"):
                     params["limit"] = arguments["limit"]
                 
-                response = await client.get(f"{base_url}/api/v1/search", params=params)
+                response = await client.get(f"{base_url}/api/v1/components", params=params)
                 response.raise_for_status()
                 return response.json()
             

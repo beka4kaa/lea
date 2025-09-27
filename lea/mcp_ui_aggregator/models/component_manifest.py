@@ -199,6 +199,10 @@ class ComponentSearchFilter(BaseModel):
     free_only: bool = False
     pro_only: bool = False
     tags: List[str] = Field(default_factory=list)
+    query: Optional[str] = None
+    limit: int = 50
+    offset: int = 0
+    tailwind_version: Optional[TailwindVersion] = None
     
     class Config:
         """Pydantic configuration."""
