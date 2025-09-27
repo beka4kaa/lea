@@ -137,6 +137,122 @@ async def get_component(component_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to get component: {str(e)}")
 
 
+@router.get("/components/{provider}/{component}/code")
+async def get_component_code(
+    provider: str, 
+    component: str, 
+    format: Optional[str] = Query("tsx", description="Code format (tsx, jsx, vue, etc.)")
+):
+    """Get component source code."""
+    try:
+        # Parse provider
+        try:
+            provider_enum = Provider(provider)
+        except ValueError:
+            raise HTTPException(status_code=404, detail=f"Provider '{provider}' not found")
+        
+        # Get provider and component
+        provider_instance = get_provider(provider_enum)
+        component_manifest = await provider_instance.get_component(component)
+        
+        # Extract code in requested format
+        code_data = component_manifest.code
+        if not code_data:
+            raise HTTPException(status_code=404, detail=f"No code available for component '{provider}/{component}'")
+        
+        # Get code in requested format
+        code = None
+        if format.lower() == "tsx" and code_data.tsx:
+            code = code_data.tsx
+        elif format.lower() == "jsx" and code_data.jsx:
+            code = code_data.jsx
+        elif format.lower() == "vue" and code_data.vue:
+            code = code_data.vue
+        elif format.lower() == "svelte" and code_data.svelte:
+            code = code_data.svelte
+        elif format.lower() == "html" and code_data.html:
+            code = code_data.html
+        elif format.lower() == "css" and code_data.css:
+            code = code_data.css
+        else:
+            # Fallback to any available code
+            code = code_data.tsx or code_data.jsx or code_data.vue or code_data.svelte or code_data.html
+        
+        if not code:
+            raise HTTPException(status_code=404, detail=f"Code not available in format '{format}' for component '{provider}/{component}'")
+        
+        return {
+            "component_id": f"{provider}/{component}",
+            "format": format,
+            "code": code,
+            "name": component_manifest.name,
+            "description": component_manifest.description,
+            "dependencies": component_manifest.runtime_deps,
+            "framework": {
+                "react": component_manifest.framework.react,
+                "vue": component_manifest.framework.vue,
+                "svelte": component_manifest.framework.svelte,
+                "next": component_manifest.framework.next
+            }
+        }
+        
+    except ComponentNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Component '{provider}/{component}' not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get component code: {str(e)}")
+
+
+@router.get("/components/{provider}/{component}/docs")
+async def get_component_docs(provider: str, component: str):
+    """Get component documentation."""
+    try:
+        # Parse provider
+        try:
+            provider_enum = Provider(provider)
+        except ValueError:
+            raise HTTPException(status_code=404, detail=f"Provider '{provider}' not found")
+        
+        # Get provider and component
+        provider_instance = get_provider(provider_enum)
+        component_manifest = await provider_instance.get_component(component)
+        
+        return {
+            "component_id": f"{provider}/{component}",
+            "name": component_manifest.name,
+            "description": component_manifest.description,
+            "documentation_url": component_manifest.documentation_url,
+            "demo_url": component_manifest.demo_url,
+            "playground_url": component_manifest.playground_url,
+            "tags": component_manifest.tags,
+            "category": component_manifest.category,
+            "framework": {
+                "react": component_manifest.framework.react,
+                "vue": component_manifest.framework.vue,
+                "svelte": component_manifest.framework.svelte,
+                "next": component_manifest.framework.next
+            },
+            "installation": {
+                "npm": component_manifest.install.npm,
+                "steps": component_manifest.install.steps
+            },
+            "dependencies": {
+                "runtime": component_manifest.runtime_deps,
+                "peer": component_manifest.peer_deps,
+                "dev": component_manifest.dev_deps
+            },
+            "license": component_manifest.license,
+            "examples": {
+                "basic": f"import {{ {component_manifest.name.replace(' ', '')} }} from '@/components/{component}';",
+                "usage": component_manifest.description
+            }
+        }
+        
+    except ComponentNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Component '{provider}/{component}' not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get component docs: {str(e)}")
+
+
 @router.get("/providers/{provider_name}/components", response_model=List[ComponentManifest])
 async def list_provider_components(
     provider_name: str,

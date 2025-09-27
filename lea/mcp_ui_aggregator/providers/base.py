@@ -143,17 +143,51 @@ class BaseProvider(ABC):
         if filters.free_only and component.requires_pro_access():
             return False
         
-        # Query filter (simple text search)
+        # Query filter (enhanced text search with synonyms)
         if filters.query:
             query_lower = filters.query.lower()
+            
+            # Define search aliases and synonyms
+            search_aliases = {
+                'cta': ['call to action', 'call-to-action', 'get started', 'sign up', 'register', 'start trial'],
+                'call to action': ['cta', 'get started', 'sign up', 'register'],
+                'features': ['features section', 'product features', 'why choose us', 'feature grid'],
+                'features section': ['features', 'product features', 'feature grid'],  
+                'testimonials': ['reviews', 'customer feedback', 'social proof', 'customer testimonials'],
+                'reviews': ['testimonials', 'customer feedback', 'social proof'],
+                'footer': ['site footer', 'page footer', 'bottom navigation'],
+                'navigation': ['navbar', 'nav', 'menu', 'header'],
+                'navbar': ['navigation', 'nav', 'menu', 'header'],
+                'get started': ['cta', 'call to action', 'sign up', 'register', 'start trial'],
+                'pricing': ['price', 'plans', 'subscription', 'cost'],
+                'auth': ['authentication', 'login', 'signin', 'signup', 'register'],
+                'hero': ['hero section', 'landing', 'banner', 'main section'],
+                'dashboard': ['admin', 'panel', 'control panel', 'admin panel']
+            }
+            
+            # Expand query with synonyms
+            expanded_queries = [query_lower]
+            if query_lower in search_aliases:
+                expanded_queries.extend(search_aliases[query_lower])
+            
+            # Build searchable text
             searchable_text = " ".join([
                 component.name,
                 component.description or "",
                 " ".join(component.tags),
-                " ".join(component.keywords)
+                " ".join(component.keywords),
+                component.slug,
+                component.category
             ]).lower()
             
-            if query_lower not in searchable_text:
+            # Check if any expanded query matches
+            found_match = False
+            for expanded_query in expanded_queries:
+                if expanded_query in searchable_text:
+                    found_match = True
+                    break
+            
+            if not found_match:
                 return False
         
         return True
