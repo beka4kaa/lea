@@ -1,0 +1,75 @@
+"""Health check endpoints."""
+
+from fastapi import APIRouter, Depends
+{% if config.orm == "sqlalchemy+alembic" %}
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from src.db.database import get_async_session
+{% endif %}
+{% if config.queue == "redis" or config.queue == "rq" %}
+import redis
+from src.core.settings import settings
+{% endif %}
+
+router = APIRouter()
+
+
+@router.get("/")
+async def health_check():
+    """Basic health check."""
+    return {
+        "status": "healthy",
+        "service": "{{ config.name }}",
+        "version": "1.0.0"
+    }
+
+
+@router.get("/detailed")
+async def detailed_health_check(
+    {% if config.orm == "sqlalchemy+alembic" %}
+    db: AsyncSession = Depends(get_async_session)
+    {% endif %}
+):
+    """Detailed health check with dependencies."""
+    
+    checks = {
+        "status": "healthy",
+        "service": "{{ config.name }}",
+        "version": "1.0.0",
+        "checks": {}
+    }
+    
+    {% if config.orm == "sqlalchemy+alembic" %}
+    # Database check
+    try:
+        await db.execute(text("SELECT 1"))
+        checks["checks"]["database"] = "healthy"
+    except Exception as e:
+        checks["checks"]["database"] = f"unhealthy: {str(e)}"
+        checks["status"] = "unhealthy"
+    {% endif %}
+    
+    {% if config.queue == "redis" or config.queue == "rq" %}
+    # Redis check
+    try:
+        r = redis.from_url(settings.redis_url)
+        r.ping()
+        checks["checks"]["redis"] = "healthy"
+    except Exception as e:
+        checks["checks"]["redis"] = f"unhealthy: {str(e)}"
+        checks["status"] = "unhealthy"
+    {% endif %}
+    
+    return checks
+
+
+@router.get("/ready")
+async def readiness_check():
+    """Readiness check for Kubernetes."""
+    return {"status": "ready"}
+
+
+@router.get("/live")
+async def liveness_check():
+    """Liveness check for Kubernetes."""
+    return {"status": "alive"}

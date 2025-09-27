@@ -1,0 +1,115 @@
+"""OpenTelemetry configuration for {{ config.name }}."""
+
+import logging
+from typing import Optional
+from opentelemetry import trace, metrics
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+{% if config.queue == "redis" or config.queue == "rq" %}
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+{% endif %}
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.propagators.b3 import B3MultiFormat
+
+from .settings import get_settings
+
+logger = logging.getLogger(__name__)
+
+
+def setup_telemetry(app) -> None:
+    """Configure OpenTelemetry tracing and metrics."""
+    settings = get_settings()
+    
+    if not settings.telemetry_enabled:
+        logger.info("Telemetry disabled, skipping setup")
+        return
+    
+    # Resource information
+    resource = Resource.create({
+        "service.name": "{{ config.name }}",
+        "service.version": "1.0.0",
+        "deployment.environment": settings.environment,
+    })
+    
+    # Setup tracing
+    _setup_tracing(resource, settings)
+    
+    # Setup metrics
+    _setup_metrics(resource, settings)
+    
+    # Setup propagation
+    set_global_textmap(B3MultiFormat())
+    
+    # Instrument FastAPI
+    FastAPIInstrumentor.instrument_app(app)
+    
+    # Instrument SQLAlchemy
+    SQLAlchemyInstrumentor().instrument()
+    
+    {% if config.queue == "redis" or config.queue == "rq" %}
+    # Instrument Redis
+    RedisInstrumentor().instrument()
+    {% endif %}
+    
+    logger.info("OpenTelemetry telemetry configured successfully")
+
+
+def _setup_tracing(resource: Resource, settings) -> None:
+    """Setup distributed tracing."""
+    tracer_provider = TracerProvider(resource=resource)
+    
+    # Add span processor
+    if settings.otlp_endpoint:
+        otlp_exporter = OTLPSpanExporter(
+            endpoint=settings.otlp_endpoint,
+            headers=_get_otlp_headers(settings),
+        )
+        span_processor = BatchSpanProcessor(otlp_exporter)
+        tracer_provider.add_span_processor(span_processor)
+    
+    trace.set_tracer_provider(tracer_provider)
+
+
+def _setup_metrics(resource: Resource, settings) -> None:
+    """Setup metrics collection."""
+    if settings.otlp_endpoint:
+        metric_exporter = OTLPMetricExporter(
+            endpoint=settings.otlp_endpoint.replace("/v1/traces", "/v1/metrics"),
+            headers=_get_otlp_headers(settings),
+        )
+        
+        metric_reader = PeriodicExportingMetricReader(
+            exporter=metric_exporter,
+            export_interval_millis=30000,  # 30 seconds
+        )
+        
+        meter_provider = MeterProvider(
+            resource=resource,
+            metric_readers=[metric_reader]
+        )
+        
+        metrics.set_meter_provider(meter_provider)
+
+
+def _get_otlp_headers(settings) -> Optional[dict]:
+    """Get OTLP headers if API key is provided."""
+    if settings.otlp_api_key:
+        return {"authorization": f"Bearer {settings.otlp_api_key}"}
+    return None
+
+
+def get_tracer(name: str):
+    """Get a tracer instance."""
+    return trace.get_tracer(name)
+
+
+def get_meter(name: str):
+    """Get a meter instance."""
+    return metrics.get_meter(name)

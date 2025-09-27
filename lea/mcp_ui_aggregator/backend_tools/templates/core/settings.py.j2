@@ -1,0 +1,71 @@
+"""Application settings and configuration."""
+
+import os
+from typing import List, Optional
+from pydantic import BaseSettings, validator
+
+
+class Settings(BaseSettings):
+    """Application settings."""
+    
+    # Basic app config
+    app_name: str = "{{ config.name }}"
+    debug: bool = False
+    port: int = 8000
+    
+    # Security
+    secret_key: str = ""
+    allowed_hosts: List[str] = ["*"]
+    cors_origins: List[str] = ["*"]
+    
+    {% if config.db == "postgres" %}
+    # Database
+    database_url: str = "postgresql://user:password@localhost:5432/{{ config.name }}"
+    {% elif config.db == "sqlite" %}
+    database_url: str = "sqlite:///./{{ config.name }}.db"
+    {% endif %}
+    
+    {% if config.queue == "redis" or config.queue == "rq" %}
+    # Redis
+    redis_url: str = "redis://localhost:6379/0"
+    {% endif %}
+    
+    {% if config.auth %}
+    # JWT Authentication
+    jwt_secret_key: str = ""
+    jwt_algorithm: str = "HS256"
+    jwt_expiration_hours: int = 24
+    refresh_token_expiration_days: int = 30
+    {% endif %}
+    
+    {% if config.telemetry %}
+    # Telemetry
+    telemetry_enabled: bool = True
+    otel_exporter_otlp_endpoint: Optional[str] = None
+    otel_service_name: str = "{{ config.name }}"
+    {% endif %}
+    
+    # Rate limiting
+    rate_limit_enabled: bool = True
+    rate_limit_requests_per_minute: int = 60
+    
+    @validator("secret_key")
+    def secret_key_required(cls, v):
+        if not v:
+            raise ValueError("SECRET_KEY is required")
+        return v
+    
+    {% if config.auth %}
+    @validator("jwt_secret_key")
+    def jwt_secret_key_required(cls, v):
+        if not v:
+            raise ValueError("JWT_SECRET_KEY is required")
+        return v
+    {% endif %}
+    
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+settings = Settings()

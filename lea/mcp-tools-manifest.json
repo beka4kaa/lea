@@ -1,9 +1,9 @@
 {
   "mcpVersion": "2024-11-05",
   "server": {
-    "name": "lea-ui-components",
-    "version": "1.0.0",
-    "description": "LEA UI Components MCP Server - 66 production-ready components from 11 providers",
+    "name": "lea-backend-turbo-boost",
+    "version": "2.0.0",
+    "description": "LEA Backend Turbo Boost - FastAPI project scaffolding + 66 UI components from 11 providers",
     "author": "beka4kaa",
     "homepage": "https://github.com/beka4kaa/lea",
     "repository": "https://github.com/beka4kaa/lea.git"
@@ -208,6 +208,96 @@
       }
     }
   ],
+  "backend_tools": [
+    {
+      "name": "project_init",
+      "description": "Initialize a complete FastAPI project with modern scaffolding, Docker, CI/CD, database, auth, and monitoring setup",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Project name (used for directory and package naming)"
+          },
+          "target_dir": {
+            "type": "string",
+            "description": "Target directory (defaults to current directory)"
+          },
+          "stack": {
+            "type": "string",
+            "enum": ["fastapi+uvicorn"],
+            "default": "fastapi+uvicorn",
+            "description": "Tech stack selection"
+          },
+          "db": {
+            "type": "string",
+            "enum": ["postgres", "sqlite"],
+            "default": "postgres",
+            "description": "Database type"
+          },
+          "orm": {
+            "type": "string",
+            "enum": ["sqlalchemy+alembic"],
+            "default": "sqlalchemy+alembic",
+            "description": "ORM and migration system"
+          },
+          "queue": {
+            "type": "string",
+            "enum": ["rq", "redis", "none"],
+            "default": "rq",
+            "description": "Background job queue system"
+          },
+          "docker": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include Docker and docker-compose setup"
+          },
+          "ci": {
+            "type": "string",
+            "enum": ["github", "gitlab", "none"],
+            "default": "github",
+            "description": "CI/CD system"
+          },
+          "telemetry": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include OpenTelemetry monitoring and Prometheus metrics"
+          },
+          "auth": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include JWT authentication scaffolding"
+          },
+          "preset": {
+            "type": "string",
+            "enum": ["api", "microservice", "full-stack"],
+            "description": "Project preset configuration"
+          }
+        },
+        "required": ["name"]
+      }
+    },
+    {
+      "name": "db_schema_design",
+      "description": "Generate database models and schemas from specifications (Planned)",
+      "status": "planned"
+    },
+    {
+      "name": "api_crud_generate", 
+      "description": "Generate CRUD API endpoints for entities (Planned)",
+      "status": "planned"
+    },
+    {
+      "name": "auth_enable",
+      "description": "Enable complete authentication flows (Planned)",
+      "status": "planned"
+    },
+    {
+      "name": "deploy_preset",
+      "description": "Configure deployment for Railway, Vercel, Docker, Kubernetes (Planned)",
+      "status": "planned"
+    }
+  ],
   "examples": {
     "search_animated_button": {
       "tool": "search_component",
@@ -233,21 +323,68 @@
       "tool": "install_plan",
       "input": {"component_ids": ["magicui/contact-form", "shadcn/button"]},
       "description": "Get installation plan for form components"
+    },
+    "create_fastapi_project": {
+      "tool": "project_init",
+      "input": {
+        "name": "my_awesome_api",
+        "db": "postgres",
+        "auth": true,
+        "docker": true,
+        "telemetry": true,
+        "ci": "github"
+      },
+      "description": "Create a complete FastAPI project with PostgreSQL, auth, Docker, and GitHub Actions"
+    },
+    "create_microservice": {
+      "tool": "project_init", 
+      "input": {
+        "name": "user_service",
+        "preset": "microservice",
+        "db": "postgres",
+        "queue": "rq",
+        "docker": true
+      },
+      "description": "Create a microservice with queue support"
     }
   },
   "capabilities": {
-    "total_components": 66,
-    "providers": 11,
-    "enhanced_features": [
-      "Production-ready TSX code with TypeScript interfaces",
-      "Interactive components (forms, modals, galleries, calculators)",
-      "Enhanced template system for consistent code quality",
-      "Framer Motion animations support",
-      "Tailwind CSS v4 compatibility",
-      "Multi-framework support (React, Vue, Svelte, Next.js)",
-      "Comprehensive search and filtering",
-      "Complete installation plans with dependencies"
-    ]
+    "ui_components": {
+      "total_components": 66,
+      "providers": 11,
+      "enhanced_features": [
+        "Production-ready TSX code with TypeScript interfaces",
+        "Interactive components (forms, modals, galleries, calculators)",
+        "Enhanced template system for consistent code quality",
+        "Framer Motion animations support",
+        "Tailwind CSS v4 compatibility",
+        "Multi-framework support (React, Vue, Svelte, Next.js)",
+        "Comprehensive search and filtering",
+        "Complete installation plans with dependencies"
+      ]
+    },
+    "backend_generation": {
+      "status": "TURBO BOOST MODE",
+      "project_scaffolding": "Complete FastAPI project initialization",
+      "templates": 17,
+      "supported_stacks": ["fastapi+uvicorn"],
+      "databases": ["PostgreSQL", "SQLite"],
+      "features": [
+        "Complete project structure generation",
+        "SQLAlchemy + Alembic database setup",
+        "JWT authentication scaffolding",
+        "Docker multi-stage builds",
+        "GitHub Actions CI/CD pipelines", 
+        "OpenTelemetry monitoring integration",
+        "Prometheus metrics collection",
+        "Production-ready configurations",
+        "Comprehensive documentation generation",
+        "Environment-based settings management"
+      ],
+      "deployment_targets": ["Railway", "Docker", "Kubernetes"],
+      "planned_tools": 22,
+      "implemented_tools": 5
+    }
   },
   "providers": {
     "magicui": {

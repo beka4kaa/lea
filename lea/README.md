@@ -1,6 +1,67 @@
-# LEA UI Components MCP Server 🎨✨
+# 🚀 LEA MCP Server - Backend Turbo Boost
 
-> **A comprehensive Model Context Protocol (MCP) server providing 66 production-ready UI components from 11 providers with AI agent auto-discovery**
+> **"Турбонасадка для бэкенда"** - Complete FastAPI project scaffolding + 66 UI components from 11 providers
+
+## 🌟 Backend Generation System (NEW!)
+
+**LEA MCP Server has evolved into a complete backend development accelerator:**
+
+- ⚡ **FastAPI Project Scaffolding** - Production-ready projects in seconds
+- 🏗️ **17+ Templates** - Docker, CI/CD, database, auth, monitoring
+- 🎯 **5 Backend Tools** - Project init, schema design, CRUD generation, auth setup, deployment
+- 🔄 **22 Planned Tools** - Complete development lifecycle coverage
+
+### Quick Backend Project Creation
+```bash
+# Through MCP protocol
+{
+  "tool": "project_init",
+  "arguments": {
+    "name": "my_awesome_api",
+    "db": "postgres", 
+    "auth": true,
+    "docker": true,
+    "telemetry": true
+  }
+}
+```
+
+## 🎨 UI Components Library (Enhanced)
+
+**66 production-ready UI components from 11 providers** with enhanced templates and interactive elements.
+
+## ⚡ Backend Generation Tools
+
+### 🏗️ Project Scaffolding (`project_init`)
+- **Complete FastAPI Structure** - Modern async Python project
+- **Database Integration** - SQLAlchemy + Alembic migrations  
+- **Authentication** - JWT scaffolding with security best practices
+- **Docker Support** - Multi-stage builds + docker-compose
+- **CI/CD Pipeline** - GitHub Actions with testing and deployment
+- **Monitoring** - OpenTelemetry + Prometheus metrics
+- **Documentation** - Auto-generated README and API docs
+
+### 🔄 Planned Tools (Phase 2-4)
+- `db.schema.design` - Database model generation
+- `api.crud.generate` - Automatic CRUD endpoints
+- `auth.enable` - Complete authentication flows
+- `deploy.preset` - Platform-specific deployment configs
+- **+18 more advanced tools** for complete development lifecycle
+
+### 📁 Generated Project Structure
+```
+your_project/
+├── src/app.py              # FastAPI app with middleware
+├── src/core/settings.py    # Pydantic configuration
+├── src/db/database.py      # Async SQLAlchemy setup
+├── src/api/health.py       # Health check endpoints
+├── tests/                  # Test suite structure
+├── alembic/                # Database migrations
+├── docker-compose.yml      # Development services
+├── Dockerfile              # Production container
+├── .github/workflows/      # CI/CD pipeline
+└── README.md               # Complete documentation
+```
 
 ## 🤖 AI Agent Integration
 

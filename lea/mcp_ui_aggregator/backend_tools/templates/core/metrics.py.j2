@@ -1,0 +1,176 @@
+"""Prometheus metrics for {{ config.name }}."""
+
+import time
+from typing import Dict, Any
+from prometheus_client import Counter, Histogram, Gauge, generate_latest
+from fastapi import Request, Response
+from fastapi.responses import PlainTextResponse
+from starlette.types import ASGIApp, Scope, Receive, Send
+
+# Metrics definitions
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status_code']
+)
+
+REQUEST_DURATION = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request duration in seconds',
+    ['method', 'endpoint']
+)
+
+REQUEST_IN_PROGRESS = Gauge(
+    'http_requests_in_progress',
+    'Number of HTTP requests currently being processed'
+)
+
+{% if config.db == "postgres" %}
+DB_CONNECTIONS = Gauge(
+    'database_connections_active',
+    'Number of active database connections'
+)
+
+DB_QUERY_DURATION = Histogram(
+    'database_query_duration_seconds',
+    'Database query duration in seconds',
+    ['operation']
+)
+{% endif %}
+
+{% if config.queue == "redis" or config.queue == "rq" %}
+QUEUE_SIZE = Gauge(
+    'queue_size',
+    'Number of items in queue',
+    ['queue_name']
+)
+
+JOB_DURATION = Histogram(
+    'job_duration_seconds',
+    'Job processing duration in seconds',
+    ['job_type']
+)
+
+JOB_COUNT = Counter(
+    'jobs_total',
+    'Total number of jobs processed',
+    ['job_type', 'status']
+)
+{% endif %}
+
+APPLICATION_INFO = Gauge(
+    'application_info',
+    'Application information',
+    ['version', 'environment']
+)
+
+
+class PrometheusMiddleware:
+    """ASGI-compliant middleware to collect HTTP metrics."""
+    
+    def __init__(self, app: ASGIApp):
+        self.app = app
+    
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Process ASGI requests and collect metrics."""
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        
+        # Extract request info from scope
+        path = scope.get("path", "")
+        method = scope.get("method", "GET")
+        
+        # Skip metrics endpoint
+        if path == "/metrics":
+            await self.app(scope, receive, send)
+            return
+        
+        # Get endpoint pattern
+        endpoint = self._get_endpoint_pattern_from_scope(scope)
+        
+        # Track request in progress
+        REQUEST_IN_PROGRESS.inc()
+        
+        # Track request duration
+        start_time = time.time()
+        status_code = "500"  # Default to error
+        
+        async def send_wrapper(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = str(message["status"])
+            await send(message)
+        
+        try:
+            await self.app(scope, receive, send_wrapper)
+        except Exception:
+            status_code = "500"
+            raise
+        finally:
+            # Record metrics
+            duration = time.time() - start_time
+            REQUEST_DURATION.labels(method=method, endpoint=endpoint).observe(duration)
+            REQUEST_COUNT.labels(method=method, endpoint=endpoint, status_code=status_code).inc()
+            REQUEST_IN_PROGRESS.dec()
+    
+    def _get_endpoint_pattern_from_scope(self, scope: dict) -> str:
+        """Extract endpoint pattern from ASGI scope."""
+        # Try to get route pattern
+        if 'route' in scope:
+            route = scope['route']
+            if hasattr(route, 'path'):
+                return route.path
+        
+        # Fallback to path
+        path = scope.get("path", "/")
+        
+        # Normalize common patterns
+        if path.startswith('/api/'):
+            # Group by API endpoints
+            parts = path.split('/')
+            if len(parts) > 3:
+                # Replace IDs with placeholder
+                if parts[3].isdigit() or len(parts[3]) > 10:
+                    parts[3] = '{id}'
+            return '/'.join(parts[:4]) if len(parts) > 3 else path
+        
+        return path
+
+
+def metrics_endpoint() -> Response:
+    """Endpoint to expose Prometheus metrics."""
+    return PlainTextResponse(
+        generate_latest(),
+        media_type="text/plain; charset=utf-8"
+    )
+
+
+def set_application_info(version: str, environment: str) -> None:
+    """Set application information metric."""
+    APPLICATION_INFO.labels(version=version, environment=environment).set(1)
+
+
+{% if config.db == "postgres" %}
+def track_db_connection_count(count: int) -> None:
+    """Track database connection count."""
+    DB_CONNECTIONS.set(count)
+
+
+def track_db_query(operation: str, duration: float) -> None:
+    """Track database query metrics."""
+    DB_QUERY_DURATION.labels(operation=operation).observe(duration)
+{% endif %}
+
+
+{% if config.queue == "redis" or config.queue == "rq" %}
+def track_queue_size(queue_name: str, size: int) -> None:
+    """Track queue size."""
+    QUEUE_SIZE.labels(queue_name=queue_name).set(size)
+
+
+def track_job_completion(job_type: str, duration: float, status: str) -> None:
+    """Track job completion metrics."""
+    JOB_DURATION.labels(job_type=job_type).observe(duration)
+    JOB_COUNT.labels(job_type=job_type, status=status).inc()
+{% endif %}

@@ -23,6 +23,7 @@ from mcp.types import (
 
 from ..providers.registry import get_all_providers
 from ..models.component_manifest import ComponentManifest, Provider, ComponentCategory
+from ..tools.backend_tools import BackendTools
 
 
 class LeaMCPServer:
@@ -31,6 +32,7 @@ class LeaMCPServer:
     def __init__(self):
         self.server = Server("lea-ui-components")
         self.providers = {}
+        self.backend_tools = BackendTools()
         self._setup_handlers()
     
     async def initialize(self):
@@ -236,6 +238,157 @@ class LeaMCPServer:
                         },
                         "required": ["code", "framework"]
                     }
+                ),
+                # Backend Generation Tools
+                Tool(
+                    name="project_init",
+                    description="Initialize a new FastAPI project with comprehensive scaffolding",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Project name"
+                            },
+                            "target_dir": {
+                                "type": "string",
+                                "description": "Target directory (defaults to current directory)"
+                            },
+                            "stack": {
+                                "type": "string",
+                                "description": "Tech stack",
+                                "enum": ["fastapi+uvicorn"],
+                                "default": "fastapi+uvicorn"
+                            },
+                            "db": {
+                                "type": "string",
+                                "description": "Database type",
+                                "enum": ["postgres", "sqlite"],
+                                "default": "postgres"
+                            },
+                            "orm": {
+                                "type": "string",
+                                "description": "ORM type",
+                                "enum": ["sqlalchemy+alembic"],
+                                "default": "sqlalchemy+alembic"
+                            },
+                            "queue": {
+                                "type": "string",
+                                "description": "Queue system",
+                                "enum": ["rq", "redis", "none"],
+                                "default": "rq"
+                            },
+                            "docker": {
+                                "type": "boolean",
+                                "description": "Enable Docker support",
+                                "default": True
+                            },
+                            "ci": {
+                                "type": "string",
+                                "description": "CI/CD system",
+                                "enum": ["github", "gitlab", "none"],
+                                "default": "github"
+                            },
+                            "telemetry": {
+                                "type": "boolean",
+                                "description": "Enable OpenTelemetry",
+                                "default": True
+                            },
+                            "auth": {
+                                "type": "boolean",
+                                "description": "Enable JWT authentication",
+                                "default": True
+                            },
+                            "preset": {
+                                "type": "string",
+                                "description": "Preset configuration",
+                                "enum": ["api", "microservice", "full-stack"]
+                            }
+                        },
+                        "required": ["name"]
+                    }
+                ),
+                Tool(
+                    name="db_schema_design",
+                    description="Generate database models and schemas",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "project_path": {
+                                "type": "string",
+                                "description": "Path to the project"
+                            },
+                            "models": {
+                                "type": "array",
+                                "items": {"type": "object"},
+                                "description": "List of model definitions"
+                            }
+                        },
+                        "required": ["project_path", "models"]
+                    }
+                ),
+                Tool(
+                    name="api_crud_generate",
+                    description="Generate CRUD API endpoints for an entity",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "project_path": {
+                                "type": "string",
+                                "description": "Path to the project"
+                            },
+                            "entity": {
+                                "type": "string",
+                                "description": "Entity name"
+                            },
+                            "fields": {
+                                "type": "array",
+                                "items": {"type": "object"},
+                                "description": "Entity fields definition"
+                            }
+                        },
+                        "required": ["project_path", "entity", "fields"]
+                    }
+                ),
+                Tool(
+                    name="auth_enable",
+                    description="Enable authentication in the project",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "project_path": {
+                                "type": "string",
+                                "description": "Path to the project"
+                            },
+                            "provider": {
+                                "type": "string",
+                                "description": "Auth provider",
+                                "enum": ["jwt", "oauth2", "basic"],
+                                "default": "jwt"
+                            }
+                        },
+                        "required": ["project_path"]
+                    }
+                ),
+                Tool(
+                    name="deploy_preset",
+                    description="Configure deployment presets",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "project_path": {
+                                "type": "string",
+                                "description": "Path to the project"
+                            },
+                            "target": {
+                                "type": "string",
+                                "description": "Deployment target",
+                                "enum": ["railway", "vercel", "docker", "kubernetes"],
+                                "default": "railway"
+                            }
+                        },
+                        "required": ["project_path"]
+                    }
                 )
             ]
 
@@ -257,6 +410,17 @@ class LeaMCPServer:
                     return await self._handle_install_plan(arguments)
                 elif name == "verify":
                     return await self._handle_verify(arguments)
+                # Backend Generation Tools
+                elif name == "project_init":
+                    return await self._handle_project_init(arguments)
+                elif name == "db_schema_design":
+                    return await self._handle_db_schema_design(arguments)
+                elif name == "api_crud_generate":
+                    return await self._handle_api_crud_generate(arguments)
+                elif name == "auth_enable":
+                    return await self._handle_auth_enable(arguments)
+                elif name == "deploy_preset":
+                    return await self._handle_deploy_preset(arguments)
                 else:
                     return [TextContent(type="text", text=f"Unknown tool: {name}")]
             except Exception as e:
@@ -1062,6 +1226,32 @@ export default function PricingTable() {
   );
 }'''
 
+    # Backend Generation Tool Handlers
+    async def _handle_project_init(self, args: Dict[str, Any]) -> List[TextContent]:
+        """Handle project_init tool call."""
+        result = self.backend_tools.project_init(**args)
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    
+    async def _handle_db_schema_design(self, args: Dict[str, Any]) -> List[TextContent]:
+        """Handle db_schema_design tool call."""
+        result = self.backend_tools.db_schema_design(**args)
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    
+    async def _handle_api_crud_generate(self, args: Dict[str, Any]) -> List[TextContent]:
+        """Handle api_crud_generate tool call."""
+        result = self.backend_tools.api_crud_generate(**args)
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    
+    async def _handle_auth_enable(self, args: Dict[str, Any]) -> List[TextContent]:
+        """Handle auth_enable tool call."""
+        result = self.backend_tools.auth_enable(**args)
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    
+    async def _handle_deploy_preset(self, args: Dict[str, Any]) -> List[TextContent]:
+        """Handle deploy_preset tool call."""
+        result = self.backend_tools.deploy_preset(**args)
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
     async def run(self):
         """Run the MCP server."""
         await self.initialize()
@@ -1072,8 +1262,8 @@ export default function PricingTable() {
                     tools=ToolsCapability()
                 ),
                 serverInfo={
-                    "name": "Lea UI Components",
-                    "version": "1.0.0"
+                    "name": "Lea UI Components + Backend Generator",
+                    "version": "2.0.0"
                 }
             ))
 

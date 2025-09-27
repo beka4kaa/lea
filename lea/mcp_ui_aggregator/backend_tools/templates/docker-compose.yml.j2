@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+  # Main Application
+  app:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      {% if config.queue == "redis" or config.queue == "rq" %}
+      - REDIS_URL=${REDIS_URL}
+      {% endif %}
+      - SECRET_KEY=${SECRET_KEY}
+      {% if config.auth %}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      {% endif %}
+      - DEBUG=${DEBUG:-false}
+    depends_on:
+      {% if config.db == "postgres" %}
+      - postgres
+      {% endif %}
+      {% if config.queue == "redis" or config.queue == "rq" %}
+      - redis
+      {% endif %}
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  {% if config.db == "postgres" %}
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: {{ config.name }}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  {% endif %}
+
+  {% if config.queue == "redis" or config.queue == "rq" %}
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+  {% endif %}
+
+  {% if config.queue == "rq" %}
+  # Background Worker
+  worker:
+    build: .
+    command: python -m src.workers.worker
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      {% if config.auth %}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      {% endif %}
+    depends_on:
+      {% if config.db == "postgres" %}
+      - postgres
+      {% endif %}
+      - redis
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+  {% endif %}
+
+  {% if config.telemetry %}
+  # Monitoring Stack (Optional - use --profile monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: ["monitoring"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    profiles: ["monitoring"]
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    restart: unless-stopped
+  {% endif %}
+
+volumes:
+  {% if config.db == "postgres" %}
+  postgres_data:
+  {% endif %}
+  {% if config.queue == "redis" or config.queue == "rq" %}
+  redis_data:
+  {% endif %}
+  {% if config.telemetry %}
+  prometheus_data:
+  grafana_data:
+  {% endif %}
+
+networks:
+  default:
+    name: {{ config.name }}_network
