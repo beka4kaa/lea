@@ -110,8 +110,8 @@ async def search_components(
                 continue
         
         # Apply global sorting and pagination
-        # Sort by popularity score and name
-        all_components.sort(key=lambda x: (-x.popularity_score, x.name))
+                # Sort by popularity and name
+        all_components.sort(key=lambda x: (-getattr(x, 'popularity_score', 0.0), x.name))
         
         # Apply pagination
         start = offset

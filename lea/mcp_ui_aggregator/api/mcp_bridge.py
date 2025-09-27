@@ -18,6 +18,103 @@ SERVER_INFO = {
 }
 
 # Available tools mapping to REST endpoints
+def validate_jsonrpc_format(data: dict) -> Optional[dict]:
+    """Validate JSON-RPC 2.0 format and return error response if invalid."""
+    request_id = data.get("id")
+    
+    # Check for JSON-RPC 2.0 compliance
+    if not data.get("jsonrpc") == "2.0":
+        # Check if this looks like a REST-style request
+        if "query" in data and "jsonrpc" not in data:
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32600,
+                    "message": "PROTOCOL MISMATCH: You sent a REST request to a JSON-RPC 2.0 endpoint",
+                    "data": {
+                        "your_request": data,
+                        "correct_format": {
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/call",
+                            "params": {
+                                "name": "search_component",
+                                "arguments": data  # Use their original data as arguments
+                            }
+                        },
+                        "documentation": "https://github.com/beka4kaa/lea/blob/main/MCP_AGENT_INTEGRATION.md",
+                        "discovery_endpoint": "/mcp-discovery",
+                        "fix": "Wrap your request in JSON-RPC 2.0 format as shown in 'correct_format'"
+                    }
+                }
+            }
+        else:
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32600,
+                    "message": "Invalid Request: Missing 'jsonrpc': '2.0'. This is a JSON-RPC 2.0 server.",
+                    "data": {
+                        "expected_format": {
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/call",
+                            "params": {
+                                "name": "search_component", 
+                                "arguments": {"query": "your_query"}
+                            }
+                        },
+                        "documentation": "https://github.com/beka4kaa/lea/blob/main/MCP_AGENT_INTEGRATION.md",
+                        "discovery_endpoint": "/mcp-discovery"
+                    }
+                }
+            }
+    
+    # Check for required method field
+    if "method" not in data:
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "error": {
+                "code": -32600,
+                "message": "Invalid Request: Missing 'method' field",
+                "data": {
+                    "available_methods": ["initialize", "tools/list", "tools/call"],
+                    "example": {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "tools/list",
+                        "params": {}
+                    }
+                }
+            }
+        }
+    
+    # Check for required id field
+    if "id" not in data:
+        return {
+            "jsonrpc": "2.0",
+            "id": None,
+            "error": {
+                "code": -32600,
+                "message": "Invalid Request: Missing 'id' field",
+                "data": {
+                    "note": "JSON-RPC 2.0 requires an 'id' field for correlation",
+                    "example": {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "tools/list",
+                        "params": {}
+                    }
+                }
+            }
+        }
+    
+    return None  # No validation errors
+
+
 TOOLS = [
     {
         "name": "list_components",
@@ -213,9 +310,14 @@ TOOLS = [
 
 @router.post("/mcp")
 async def mcp_handler(request: Request):
-    """Handle MCP JSON-RPC requests."""
+    """Handle MCP JSON-RPC requests with format validation."""
     try:
         data = await request.json()
+        
+        # First check for JSON-RPC 2.0 format compliance
+        format_validation_error = validate_jsonrpc_format(data)
+        if format_validation_error:
+            return format_validation_error
         
         # Handle different MCP methods
         method = data.get("method")
@@ -273,17 +375,57 @@ async def mcp_handler(request: Request):
                 "id": request_id,
                 "error": {
                     "code": -32601,
-                    "message": f"Method not found: {method}"
+                    "message": f"Method not found: {method}",
+                    "data": {
+                        "available_methods": ["initialize", "tools/list", "tools/call"],
+                        "suggestions": {
+                            "initialize": "Start MCP session",
+                            "tools/list": "List available tools",
+                            "tools/call": "Call a specific tool"
+                        },
+                        "example": {
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/list",
+                            "params": {}
+                        },
+                        "documentation": "https://github.com/beka4kaa/lea/blob/main/MCP_AGENT_INTEGRATION.md"
+                    }
                 }
             }
     
+    except json.JSONDecodeError as e:
+        return {
+            "jsonrpc": "2.0",
+            "id": None,
+            "error": {
+                "code": -32700,
+                "message": "Parse error: Invalid JSON",
+                "data": {
+                    "error_details": str(e),
+                    "fix": "Ensure your request is valid JSON",
+                    "example": {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "tools/list",
+                        "params": {}
+                    }
+                }
+            }
+        }
     except Exception as e:
         return {
             "jsonrpc": "2.0",
             "id": data.get("id") if "data" in locals() else None,
             "error": {
                 "code": -32603,
-                "message": f"Internal error: {str(e)}"
+                "message": "Internal error",
+                "data": {
+                    "error_details": str(e),
+                    "contact": "https://github.com/beka4kaa/lea/issues",
+                    "discovery": "/mcp-discovery",
+                    "status": "/mcp-status"
+                }
             }
         }
 
@@ -398,12 +540,45 @@ async def handle_tool_call(tool_name: str, arguments: Dict[str, Any]) -> Dict[st
                 return response.json()
             
             else:
-                return {"error": f"Unknown tool: {tool_name}"}
+                return {
+                    "error": f"Unknown tool: {tool_name}",
+                    "available_tools": [tool["name"] for tool in TOOLS],
+                    "suggestions": {
+                        "list_components": "List UI components with optional filtering",
+                        "search_component": "Search components by query",
+                        "get_component_code": "Get component source code",
+                        "get_block": "Get UI blocks (auth, pricing, etc.)",
+                        "install_plan": "Get installation dependencies"
+                    },
+                    "documentation": "Use 'tools/list' method to see full tool schemas"
+                }
         
         except httpx.HTTPStatusError as e:
-            return {"error": f"HTTP {e.response.status_code}: {e.response.text}"}
+            error_detail = e.response.text if hasattr(e.response, 'text') else str(e)
+            return {
+                "error": f"HTTP {e.response.status_code}",
+                "details": error_detail,
+                "tool": tool_name,
+                "arguments": arguments,
+                "fix": "Check tool arguments and try again",
+                "status_endpoint": "/mcp-status"
+            }
+        except httpx.RequestError as e:
+            return {
+                "error": "Network error",
+                "details": str(e),
+                "tool": tool_name,
+                "fix": "Check if server is running and accessible",
+                "health_check": "/health"
+            }
         except Exception as e:
-            return {"error": f"Tool call failed: {str(e)}"}
+            return {
+                "error": "Tool execution failed",
+                "details": str(e),
+                "tool": tool_name,
+                "arguments": arguments,
+                "contact": "https://github.com/beka4kaa/lea/issues"
+            }
 
 
 # Health check for MCP endpoint

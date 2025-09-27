@@ -181,6 +181,7 @@ class ComponentManifest(BaseModel):
     downloads: Optional[int] = Field(None, description="Download count")
     stars: Optional[int] = Field(None, description="GitHub stars or equivalent")
     forks: Optional[int] = Field(None, description="GitHub forks or equivalent")
+    popularity_score: float = Field(default=0.0, description="Computed popularity score for sorting")
     
     class Config:
         """Pydantic configuration."""

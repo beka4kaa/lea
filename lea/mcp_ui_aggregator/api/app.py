@@ -14,6 +14,7 @@ from mcp_ui_aggregator.core.database import get_session, create_tables
 from mcp_ui_aggregator.api.providers_api_simple import router as providers_router
 from mcp_ui_aggregator.api.mcp_bridge import router as mcp_router
 from mcp_ui_aggregator.api.blocks_api import router as blocks_router
+from mcp_ui_aggregator.api.mcp_discovery import router as discovery_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -70,11 +71,25 @@ async def root():
         "version": "0.1.0",
         "description": "A Model Context Protocol server for UI component management",
         "mcp_server": settings.mcp_server_name,
+        "protocol": "MCP 2024-11-05 (JSON-RPC 2.0)",
+        "providers": {
+            "count": 11,
+            "active": ["magicui", "shadcn", "daisyui", "reactbits", "tremor", "nextui", "chakra", "mantine", "antd", "arco", "semi"]
+        },
         "endpoints": {
             "health": "/health",
             "mcp": "/mcp",
+            "mcp_discovery": "/mcp-discovery",
+            "mcp_status": "/mcp-status", 
+            "openapi_mcp": "/openapi-mcp.json",
             "docs": "/docs",
             "redoc": "/redoc",
+            "api_v1": "/api/v1"
+        },
+        "integration": {
+            "documentation": "https://github.com/beka4kaa/lea/blob/main/MCP_AGENT_INTEGRATION.md",
+            "discovery": "GET /mcp-discovery for agent integration examples",
+            "format": "All MCP requests must use JSON-RPC 2.0 format"
         }
     }
 
@@ -94,6 +109,7 @@ async def health_check():
 app.include_router(providers_router, prefix="/api/v1")
 app.include_router(mcp_router, prefix="")
 app.include_router(blocks_router, prefix="/api/v1")
+app.include_router(discovery_router, prefix="")
 
 
 if __name__ == "__main__":
