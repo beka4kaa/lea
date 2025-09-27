@@ -65,32 +65,62 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/")
 async def root():
-    """Root endpoint."""
+    """Root endpoint with AI agent integration information."""
     return {
-        "name": "MCP UI Aggregator",
-        "version": "0.1.0",
-        "description": "A Model Context Protocol server for UI component management",
+        "name": "LEA UI Components MCP Server",
+        "version": "1.0.0",
+        "description": "Production-ready UI component aggregator with 66 components from 11 providers",
         "mcp_server": settings.mcp_server_name,
         "protocol": "MCP 2024-11-05 (JSON-RPC 2.0)",
-        "providers": {
-            "count": 11,
-            "active": ["magicui", "shadcn", "daisyui", "reactbits", "tremor", "nextui", "chakra", "mantine", "antd", "arco", "semi"]
+        "components": {
+            "total": 66,
+            "providers": {
+                "count": 11,
+                "active": ["magicui", "shadcn", "daisyui", "reactbits", "tremor", "nextui", "chakra", "mantine", "antd", "arco", "semi"]
+            },
+            "enhanced_features": [
+                "Production-ready TSX code with TypeScript interfaces",
+                "Interactive components (forms, modals, galleries, calculators)",
+                "Enhanced template system for consistent code quality",
+                "Framer Motion animations support",
+                "Tailwind CSS v4 compatibility"
+            ]
+        },
+        "ai_agent_integration": {
+            "auto_discovery": "GET /mcp-discovery - Complete server capabilities and examples",
+            "tools_manifest": "GET /mcp-tools-manifest.json - Standard MCP tools specification",
+            "quick_start": "Use search_component with natural language queries",
+            "documentation": "https://github.com/beka4kaa/lea/blob/main/MCP_AI_AGENT_GUIDE.md",
+            "example_query": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                    "name": "search_component",
+                    "arguments": {"query": "animated button with hover effects", "limit": 5}
+                }
+            }
         },
         "endpoints": {
-            "health": "/health",
             "mcp": "/mcp",
-            "mcp_discovery": "/mcp-discovery",
-            "mcp_status": "/mcp-status", 
-            "openapi_mcp": "/openapi-mcp.json",
+            "discovery": "/mcp-discovery",
+            "tools_manifest": "/mcp-tools-manifest.json",
+            "status": "/mcp-status",
+            "health": "/health",
+            "openapi": "/openapi-mcp.json",
             "docs": "/docs",
             "redoc": "/redoc",
             "api_v1": "/api/v1"
         },
-        "integration": {
-            "documentation": "https://github.com/beka4kaa/lea/blob/main/MCP_AGENT_INTEGRATION.md",
-            "discovery": "GET /mcp-discovery for agent integration examples",
-            "format": "All MCP requests must use JSON-RPC 2.0 format"
-        }
+        "tools_available": [
+            "search_component",
+            "get_component_code", 
+            "list_components",
+            "get_component_docs",
+            "get_block",
+            "install_plan",
+            "verify"
+        ]
     }
 
 

@@ -1,6 +1,41 @@
-# 🎨 Lea - MCP UI Components Server
+# LEA UI Components MCP Server 🎨✨
 
-> **Model Context Protocol (MCP) server providing access to 326+ UI components from 11 popular design systems**
+> **A comprehensive Model Context Protocol (MCP) server providing 66 production-ready UI components from 11 providers with AI agent auto-discovery**
+
+## 🤖 AI Agent Integration
+
+**LEA UI Components MCP Server is designed for automatic discovery by AI agents!**
+
+### Quick Start for AI Agents
+
+1. **Auto-Discovery**: `GET /mcp-discovery` - Complete server capabilities
+2. **Tools Manifest**: `GET /mcp-tools-manifest.json` - Standard MCP specification  
+3. **Documentation**: [Complete AI Agent Guide](./MCP_AI_AGENT_GUIDE.md)
+
+### Example Usage in AI Agents
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call", 
+  "params": {
+    "name": "search_component",
+    "arguments": {
+      "query": "animated button with hover effects",
+      "limit": 5
+    }
+  }
+}
+```
+
+**Available Tools for AI Agents:**
+- `search_component` - Natural language component search
+- `get_component_code` - Production-ready TSX/JSX code
+- `list_components` - Browse all 66 components  
+- `get_component_docs` - Installation & usage docs
+- `get_block` - Complete UI blocks (auth, pricing, etc.)
+- `install_plan` - Dependency management
+- `verify` - Code validation
 
 [![MCP Protocol](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://spec.modelcontextprotocol.io/)
 [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://python.org)

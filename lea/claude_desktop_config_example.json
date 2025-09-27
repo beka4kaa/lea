@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "lea-ui-components": {
+      "command": "uvicorn",
+      "args": [
+        "mcp_ui_aggregator.api.app:app",
+        "--host", "127.0.0.1", 
+        "--port", "8000"
+      ],
+      "cwd": "/Users/bekzhan/Documents/projects/mcp/lea",
+      "env": {
+        "PYTHONPATH": "/Users/bekzhan/Documents/projects/mcp/lea"
+      }
+    }
+  }
+}

@@ -1,0 +1,278 @@
+{
+  "mcpVersion": "2024-11-05",
+  "server": {
+    "name": "lea-ui-components",
+    "version": "1.0.0",
+    "description": "LEA UI Components MCP Server - 66 production-ready components from 11 providers",
+    "author": "beka4kaa",
+    "homepage": "https://github.com/beka4kaa/lea",
+    "repository": "https://github.com/beka4kaa/lea.git"
+  },
+  "tools": [
+    {
+      "name": "search_component",
+      "description": "Search UI components using natural language queries across 66 components from 11 providers (MagicUI, Shadcn, DaisyUI, etc.)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Natural language search query (e.g., 'animated button', 'contact form', 'image gallery')"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["magicui", "shadcn", "daisyui", "reactbits", "tremor", "nextui", "chakra", "mantine", "antd", "arco", "semi"],
+            "description": "Filter by specific provider"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["animated", "forms", "navigation", "buttons", "inputs", "layouts", "data_display", "feedback", "overlays", "text", "backgrounds", "cards", "other"],
+            "description": "Filter by component category"
+          },
+          "framework": {
+            "type": "string",
+            "enum": ["react", "vue", "svelte", "angular", "next", "nuxt"],
+            "description": "Target framework compatibility"
+          },
+          "free_only": {
+            "type": "boolean",
+            "description": "Only return free components",
+            "default": false
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10,
+            "description": "Number of results to return"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "get_component_code",
+      "description": "Get complete production-ready source code for any component with TypeScript interfaces, styling, and animations",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "component_id": {
+            "type": "string",
+            "pattern": "^[a-z]+/[a-z-]+$",
+            "description": "Component ID in format 'provider/slug' (e.g., 'shadcn/button', 'magicui/contact-form')"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["tsx", "jsx", "vue", "svelte", "html", "auto"],
+            "default": "auto",
+            "description": "Preferred code format"
+          }
+        },
+        "required": ["component_id"]
+      }
+    },
+    {
+      "name": "list_components",
+      "description": "List all available UI components with optional filtering by provider, category, framework, and pagination",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["magicui", "shadcn", "daisyui", "reactbits", "tremor", "nextui", "chakra", "mantine", "antd", "arco", "semi"],
+            "description": "Filter by provider"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["animated", "forms", "navigation", "buttons", "inputs", "layouts", "data_display", "feedback", "overlays", "text", "backgrounds", "cards", "other"],
+            "description": "Filter by component category"
+          },
+          "framework": {
+            "type": "string",
+            "enum": ["react", "vue", "svelte", "angular", "next", "nuxt"],
+            "description": "Filter by framework compatibility"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Number of components to return"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Number of components to skip for pagination"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_component_docs",
+      "description": "Get comprehensive documentation, usage examples, installation instructions, and dependencies for any component",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "component_id": {
+            "type": "string",
+            "pattern": "^[a-z]+/[a-z-]+$",
+            "description": "Component ID in format 'provider/slug'"
+          }
+        },
+        "required": ["component_id"]
+      }
+    },
+    {
+      "name": "get_block",
+      "description": "Get complete UI blocks (multi-component layouts) like authentication pages, pricing sections, hero sections, navigation bars, footers, and dashboards",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "block_type": {
+            "type": "string",
+            "enum": ["auth", "pricing", "navbar", "hero", "footer", "dashboard", "landing"],
+            "description": "Type of UI block to generate"
+          },
+          "target": {
+            "type": "string",
+            "enum": ["nextjs", "react", "vue", "svelte"],
+            "default": "nextjs",
+            "description": "Target framework"
+          },
+          "style": {
+            "type": "string",
+            "enum": ["tailwind", "css-modules", "styled-components"],
+            "default": "tailwind",
+            "description": "Styling approach"
+          }
+        },
+        "required": ["block_type"]
+      }
+    },
+    {
+      "name": "install_plan",
+      "description": "Generate complete installation plan with all dependencies, commands, and setup steps for selected components",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "component_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1,
+            "description": "List of component IDs to install (e.g., ['shadcn/button', 'magicui/contact-form'])"
+          },
+          "target": {
+            "type": "string",
+            "enum": ["nextjs", "react", "vue", "svelte"],
+            "default": "nextjs",
+            "description": "Target framework"
+          },
+          "package_manager": {
+            "type": "string",
+            "enum": ["npm", "yarn", "pnpm", "bun"],
+            "default": "npm",
+            "description": "Package manager preference"
+          }
+        },
+        "required": ["component_ids"]
+      }
+    },
+    {
+      "name": "verify",
+      "description": "Verify component code for syntax errors, import issues, and framework compatibility",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Component code to verify"
+          },
+          "framework": {
+            "type": "string",
+            "enum": ["react", "vue", "svelte", "nextjs"],
+            "description": "Target framework for verification"
+          },
+          "check_imports": {
+            "type": "boolean",
+            "default": true,
+            "description": "Check import statements for validity"
+          },
+          "check_syntax": {
+            "type": "boolean",
+            "default": true,
+            "description": "Check syntax validity"
+          }
+        },
+        "required": ["code", "framework"]
+      }
+    }
+  ],
+  "examples": {
+    "search_animated_button": {
+      "tool": "search_component",
+      "input": {"query": "animated button with hover effects", "limit": 5},
+      "description": "Find animated button components"
+    },
+    "get_contact_form_code": {
+      "tool": "get_component_code", 
+      "input": {"component_id": "magicui/contact-form"},
+      "description": "Get complete contact form code (4000+ characters)"
+    },
+    "list_magicui_components": {
+      "tool": "list_components",
+      "input": {"provider": "magicui", "limit": 10},
+      "description": "List MagicUI components"
+    },
+    "get_pricing_block": {
+      "tool": "get_block",
+      "input": {"block_type": "pricing", "target": "nextjs"},
+      "description": "Get complete pricing section"
+    },
+    "install_form_components": {
+      "tool": "install_plan",
+      "input": {"component_ids": ["magicui/contact-form", "shadcn/button"]},
+      "description": "Get installation plan for form components"
+    }
+  },
+  "capabilities": {
+    "total_components": 66,
+    "providers": 11,
+    "enhanced_features": [
+      "Production-ready TSX code with TypeScript interfaces",
+      "Interactive components (forms, modals, galleries, calculators)",
+      "Enhanced template system for consistent code quality",
+      "Framer Motion animations support",
+      "Tailwind CSS v4 compatibility",
+      "Multi-framework support (React, Vue, Svelte, Next.js)",
+      "Comprehensive search and filtering",
+      "Complete installation plans with dependencies"
+    ]
+  },
+  "providers": {
+    "magicui": {
+      "components": 36,
+      "enhanced_templates": true,
+      "interactive_components": ["contact-form", "modal-dialog", "image-gallery", "loading-spinner", "tooltip", "calculator"],
+      "description": "Animated components with enhanced templates and interactive elements"
+    },
+    "shadcn": {
+      "components": 30,
+      "enhanced_templates": true,
+      "core_components": ["button", "input", "card", "badge", "avatar"],
+      "description": "Core UI components with enhanced template system"
+    },
+    "daisyui": {
+      "components": "varies",
+      "description": "Semantic component classes for Tailwind CSS"
+    }
+  },
+  "integration": {
+    "protocol": "MCP 2024-11-05",
+    "transport": "JSON-RPC 2.0",
+    "endpoint": "/mcp",
+    "discovery": "/mcp-discovery",
+    "health": "/health",
+    "documentation": "https://github.com/beka4kaa/lea/blob/main/MCP_AI_AGENT_GUIDE.md"
+  }
+}
